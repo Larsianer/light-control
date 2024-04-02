@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Light control for my room
+        </title>
+        <link rel="stylesheet" href=style.css>
+    </head>
+    <body>
+        <form method="post">
+            <div class="container">
+                <input type="checkbox" id="enable"/>
+                <label for="enable">Enable LEDs</label>
+                <input type="submit" id="update" value="Update LEDs">
+            </div>
+            <div class="container" id="color-picker">
+                <input type="range" min=0 max=255 id="hue" class="color-picker-range"/>
+                <label for="hue">Hue</label>
+                <input type="range" min=0 max=255 id="sat" class="color-picker-range"/>
+                <label for="sat">Saturation</label>
+                <input type="range" min=0 max=255 id="val" class="color-picker-range"/>
+                <label for="val">Value</label>
+            </div>
+        </form>
+    </body>
+</html>

@@ -1,0 +1,21 @@
+body {
+    background-color: #303030;
+}
+
+label {
+    font: 1rem sans-serif;
+}
+
+#update {
+    margin: 5px;
+}
+
+.container {
+    padding: 10px;
+    margin: 10px;
+    border-width: 1px;
+    border-color: white;
+    border-style: solid;
+    box-sizing: border-box;
+    width: min-content;
+}
