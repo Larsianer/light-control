@@ -15,6 +15,7 @@
         in pkgs.mkShell {
             packages = with pkgs; [
                 platformio-core
+                gnumake
             ];
 
             shellHook = ''
