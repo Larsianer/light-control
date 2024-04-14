@@ -13,6 +13,7 @@ body {
 
 label {
     font: 1rem sans-serif;
+    color: white;
 }
 
 #update {

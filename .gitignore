@@ -1,2 +1,4 @@
 .pio
-flake.lock
+.cache
+.ccls
+compile_commands.json

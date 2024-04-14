@@ -1,6 +1,5 @@
-test: src/main.ino prepare_includes
+test: src/main.cpp prepare_includes
 	pio run -t upload
-	pio device monitor
 
 prepare_includes:
 	rm include/index.h
