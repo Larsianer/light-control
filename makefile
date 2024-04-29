@@ -1,5 +1,8 @@
 test: src/main.cpp prepare_includes
-	pio run -t upload
+	pio run -t upload -e d1_mini
+
+ota: src/main.cpp prepare_includes
+	pio run -t upload -e d1_mini_ota
 
 prepare_includes:
 	rm include/index.h

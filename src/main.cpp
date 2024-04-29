@@ -5,6 +5,13 @@
 #include "Updater.h"
 #include "index.h"
 #include "ArduinoOTA.h"
+#include "FastLED.h"
+
+#define DATA_PIN 5
+#define LED_TYPE WS2811
+#define COLOR_ORDER GRB
+#define NUM_LEDS 90
+CRGB leds[NUM_LEDS];
 
 ***REMOVED***
 ***REMOVED***
@@ -36,10 +43,13 @@ void setup() {
     WiFi.begin(SSID, PWD);
     // delay(1500);
 
-    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        Serial.print("Connection Failed! Rebooting...");
+    while (WiFi.status() != WL_CONNECTED) {
+        /* Serial.print("Connection Failed! Rebooting...");
         delay(5000);
         ESP.restart();
+        */
+        Serial.print(".");
+        delay(500);
     }
 
     ArduinoOTA.onStart([]() {
@@ -95,6 +105,13 @@ void setup() {
 
     server.begin();
 
+    FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+    FastLED.setBrightness(255);
+
+    for (int i = 0; i < NUM_LEDS; ++i) {
+        leds[i] = CRGB::Green;
+    }
+
     Serial.println("Setup done");
 }
 
@@ -102,4 +119,6 @@ void loop() {
     MDNS.update();
     ArduinoOTA.handle();
     server.handleClient();
+
+    FastLED.show();
 }
