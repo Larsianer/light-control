@@ -21,8 +21,17 @@ ESP8266WebServer server(80);
 void handle_post() {
     server.send(200, "text/html", HTML_CONTENT);
     int count = server.args();
+    bool enable = false;
     for (int i = 0; i < count; ++i) {
-        Serial.println(server.arg(i));
+        if (server.argName(i) == "enable") {
+            enable = true;
+        }
+    }
+}
+
+void enable_leds(bool enable) {
+    if (enable) {
+        return;
     }
 }
 
