@@ -6,33 +6,77 @@
 #include "index.h"
 #include "ArduinoOTA.h"
 #include "FastLED.h"
+#include <string>
 
 #define DATA_PIN 5
 #define LED_TYPE WS2811
 #define COLOR_ORDER GRB
 #define NUM_LEDS 90
 CRGB leds[NUM_LEDS];
+CHSV color(90, 255, 255);
+bool status = true;
+
+std::string script(R"""(
+<script>
+    document.getElementById("enable").checked = rEnable;
+    document.getElementById("hue").value = rHue;
+    document.getElementById("sat").value = rSat;
+    document.getElementById("val").value = rVal;
+</script>
+)""");
+
 
 ***REMOVED***
 ***REMOVED***
 
 ESP8266WebServer server(80);
 
-void handle_post() {
-    server.send(200, "text/html", HTML_CONTENT);
-    int count = server.args();
-    bool enable = false;
-    for (int i = 0; i < count; ++i) {
-        if (server.argName(i) == "enable") {
-            enable = true;
+void enable_leds(bool enable) {
+    if (enable) {
+        for (int i = 0; i < NUM_LEDS; ++i) {
+            leds[i] = color;
+        }
+    } else {
+        for (int i = 0; i < NUM_LEDS; ++i) {
+            leds[i] = CRGB::Black;
         }
     }
 }
 
-void enable_leds(bool enable) {
-    if (enable) {
-        return;
+std::string prepare_html() {
+    std::string ret = HTML_CONTENT;
+    ret.append(script);
+    int enable_pos = ret.find("rEnable");
+    ret.replace(enable_pos, 7, status ? "true" : "false"); 
+    int hue_pos = ret.find("rHue");
+    ret.replace(hue_pos, 4, std::to_string(color.hue)); 
+    int sat_pos = ret.find("rSat");
+    ret.replace(sat_pos, 4, std::to_string(color.sat)); 
+    int val_pos = ret.find("rVal");
+    ret.replace(val_pos, 4, std::to_string(color.val)); 
+    return ret;
+} 
+
+void handle_post() {
+    int count = server.args();
+    status = false;
+    int hue, sat, val;
+    for (int i = 0; i < count; ++i) {
+        if (server.argName(i) == "enable") {
+            status = true;
+        } else if (server.argName(i) == "hue") {
+            hue = server.arg(i).toInt();
+        } else if (server.argName(i) == "sat") {
+            sat = server.arg(i).toInt();
+        } else if (server.argName(i) == "val") {
+            val = server.arg(i).toInt();
+        }
     }
+
+    color.setHSV(hue, sat, val);
+
+    enable_leds(status);
+    server.send(200, "text/html", prepare_html().c_str());
 }
 
 void setup() {
@@ -109,7 +153,7 @@ void setup() {
     // Add service to MDNS-SD
     MDNS.addService("http", "tcp", 80);
 
-    server.on("/", HTTP_GET, [](){ server.send(200, "text/html", HTML_CONTENT); });
+    server.on("/", HTTP_GET, [](){ server.send(200, "text/html", prepare_html().c_str()); });
     server.on("/", HTTP_POST, handle_post);
 
     server.begin();
@@ -117,9 +161,7 @@ void setup() {
     FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(255);
 
-    for (int i = 0; i < NUM_LEDS; ++i) {
-        leds[i] = CRGB::Green;
-    }
+    enable_leds(status);
 
     Serial.println("Setup done");
 }
