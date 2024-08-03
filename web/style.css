@@ -14,7 +14,8 @@ label {
 .container {
     padding: 10px;
     margin: 10px;
-    border-width: 1px;
+    border-width: 2px;
+    border-radius: 4px;
     border-color: white;
     border-style: solid;
     box-sizing: border-box;
