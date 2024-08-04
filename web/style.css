@@ -16,8 +16,14 @@ label {
     margin: 10px;
     border-width: 2px;
     border-radius: 4px;
-    border-color: white;
+    border-color: #e7e7ed;
     border-style: solid;
     box-sizing: border-box;
     width: min-content;
+}
+
+.grid-container {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 20% 20%;
 }
