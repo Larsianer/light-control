@@ -11,6 +11,11 @@ label {
     margin: 5px;
 }
 
+#color-preview {
+    width: 100px;
+    height: 100px;
+}
+
 .container {
     padding: 10px;
     margin: 10px;
@@ -19,11 +24,11 @@ label {
     border-color: #e7e7ed;
     border-style: solid;
     box-sizing: border-box;
-    width: min-content;
+    width: max-content;
 }
 
 .grid-container {
     display: grid;
     gap: 20px;
-    grid-template-columns: 20% 20%;
+    grid-template-columns: 15% 20%;
 }

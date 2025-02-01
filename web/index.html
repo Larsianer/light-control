@@ -31,6 +31,10 @@
                 <div class="container">
                     <input type="checkbox" name="enable" id="enable"/>
                     <label for="enable">Enable LEDs</label>
+                    <br>
+                    <input type="checkbox" name="animate" id="animate"/>
+                    <label for="animate">Animate LEDS</label>
+                    <br>
                     <input type="submit" id="update" value="Update LEDs">
                 </div>
                 <div class="container" id="color-preview">
@@ -38,8 +42,10 @@
                 <div class="container" id="color-picker">
                     <input type="range" min=0 max=255 name="hue" id="hue" class="color-picker-range" oninput="previewColor()"/>
                     <label for="hue">Hue</label>
+                    <br>
                     <input type="range" min=0 max=255 name="sat" id="sat" class="color-picker-range" oninput="previewColor()"/>
                     <label for="sat">Saturation</label>
+                    <br>
                     <input type="range" min=0 max=255 name="val" id="val" class="color-picker-range" oninput="previewColor()"/>
                     <label for="val">Value</label>
                 </div>

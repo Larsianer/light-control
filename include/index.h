@@ -20,6 +20,11 @@ label {
     margin: 5px;
 }
 
+#color-preview {
+    width: 100px;
+    height: 100px;
+}
+
 .container {
     padding: 10px;
     margin: 10px;
@@ -28,13 +33,13 @@ label {
     border-color: #e7e7ed;
     border-style: solid;
     box-sizing: border-box;
-    width: min-content;
+    width: max-content;
 }
 
 .grid-container {
     display: grid;
     gap: 20px;
-    grid-template-columns: 20% 20%;
+    grid-template-columns: 15% 20%;
 }
         </style>
         <script>
@@ -61,6 +66,10 @@ label {
                 <div class="container">
                     <input type="checkbox" name="enable" id="enable"/>
                     <label for="enable">Enable LEDs</label>
+                    <br>
+                    <input type="checkbox" name="animate" id="animate"/>
+                    <label for="animate">Animate LEDS</label>
+                    <br>
                     <input type="submit" id="update" value="Update LEDs">
                 </div>
                 <div class="container" id="color-preview">
@@ -68,18 +77,12 @@ label {
                 <div class="container" id="color-picker">
                     <input type="range" min=0 max=255 name="hue" id="hue" class="color-picker-range" oninput="previewColor()"/>
                     <label for="hue">Hue</label>
+                    <br>
                     <input type="range" min=0 max=255 name="sat" id="sat" class="color-picker-range" oninput="previewColor()"/>
                     <label for="sat">Saturation</label>
+                    <br>
                     <input type="range" min=0 max=255 name="val" id="val" class="color-picker-range" oninput="previewColor()"/>
                     <label for="val">Value</label>
-                </div>
-                <div class="container">
-                </div>
-                <div class="container">
-                </div>
-                <div class="container">
-                </div>
-                <div class="container">
                 </div>
             </div>
         </form>
