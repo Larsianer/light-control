@@ -10,7 +10,6 @@
 
 CRGB leds[NUM_LEDS];
 CRGB ledColor(255, 255, 255);
-bool status = true;
 
 WiFiClient client;
 HADevice device;
@@ -23,7 +22,7 @@ HALight light("bookshelf", HALight::BrightnessFeature | HALight::RGBFeature);
 
 void updateLeds(CRGB newColor) {
     for (int i = 0; i < NUM_LEDS; ++i) {
-        leds[i] = ledColor;
+        leds[i] = newColor;
     }
 }
 
@@ -68,11 +67,6 @@ void setup() {
 
     device.enableSharedAvailability();
     device.enableLastWill();
-
-    // set the light before connecting to the mqtt client, so that it is reported correctly
-    light.setCurrentRGBColor(HALight::RGBColor(ledColor.red, ledColor.green, ledColor.blue));
-    light.setCurrentBrightness(255);
-    light.setCurrentState(true);
 
     // WiFi.disconnect();
     WiFi.mode(WIFI_STA);
@@ -137,11 +131,17 @@ void setup() {
     FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
     FastLED.setBrightness(255);
 
+    // set the light before connecting to the mqtt client, so that it is reported correctly
+    light.setCurrentRGBColor(HALight::RGBColor(ledColor.red, ledColor.green, ledColor.blue));
+    light.setCurrentBrightness(255);
+    light.setCurrentState(true);
+
+    // enable light on startup
     enable_leds(true);
 
     // set device details
     device.setName("Esp8266 on bookshelf");
-    device.setSoftwareVersion("0.1.0");
+    device.setSoftwareVersion("0.1.1");
 
     // handle light states
     light.onStateCommand(onStateCommand);
