@@ -1,6 +1,7 @@
 #include <ArduinoHA.h>
 #include <ArduinoOTA.h>
 #include <FastLED.h>
+#include "secrets.h"
 
 #define BROKER_ADDR IPAddress(192, 168, 2, 145)
 #define DATA_PIN 5
@@ -16,9 +17,6 @@ HADevice device;
 HAMqtt mqtt(client, device);
 
 HALight light("bookshelf", HALight::BrightnessFeature | HALight::RGBFeature);
-
-***REMOVED***
-***REMOVED***
 
 void updateLeds(CRGB newColor) {
     for (int i = 0; i < NUM_LEDS; ++i) {
