@@ -1,13 +1,32 @@
+#define DESK
+#define ARDUINOHA_DEBUG
 #include <ArduinoHA.h>
 #include <ArduinoOTA.h>
 #include <FastLED.h>
 #include "secrets.h"
 
+// include the right header file and for ide completion define some placeholders
+#ifdef BOOKSHELF
+#define NUM_LEDS 90
+#define NAME "bookshelf"
+#endif
+
+#ifdef DESK
+#define NUM_LEDS 60
+#define NAME "desk"
+#endif
+
+#ifndef BOOKSHELF 
+#ifndef DESK
+#define NUM_LEDS 0
+#define NAME "test"
+#endif
+#endif
+
 #define BROKER_ADDR IPAddress(192, 168, 2, 145)
 #define DATA_PIN 5
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
-#define NUM_LEDS 90
 
 CRGB leds[NUM_LEDS];
 CRGB ledColor(255, 255, 255);
@@ -16,7 +35,7 @@ WiFiClient client;
 HADevice device;
 HAMqtt mqtt(client, device);
 
-HALight light("bookshelf", HALight::BrightnessFeature | HALight::RGBFeature);
+HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature);
 
 void updateLeds(CRGB newColor) {
     for (int i = 0; i < NUM_LEDS; ++i) {
@@ -62,6 +81,9 @@ void setup() {
     byte mac[WL_MAC_ADDR_LENGTH];
     WiFi.macAddress(mac);
     device.setUniqueId(mac, sizeof(mac));
+    device.enableExtendedUniqueIds();
+    Serial.println("unique id");
+    Serial.println(device.getUniqueId());
 
     device.enableSharedAvailability();
     device.enableLastWill();
@@ -138,8 +160,11 @@ void setup() {
     enable_leds(true);
 
     // set device details
-    device.setName("Esp8266 on bookshelf");
-    device.setSoftwareVersion("0.1.1");
+    char buf[strlen("Esp8266 on ") + strlen(NAME) + 1];
+    strcpy(buf, "Esp8266 on ");
+    strcat(buf, NAME);
+    device.setName(buf);
+    device.setSoftwareVersion("1.0");
 
     // handle light states
     light.onStateCommand(onStateCommand);
