@@ -1,5 +1,6 @@
 #define DESK
 #define ARDUINOHA_DEBUG
+#include <ArduinoHADefines.h>
 #include <ArduinoHA.h>
 #include <ArduinoOTA.h>
 #include <FastLED.h>
@@ -9,11 +10,13 @@
 #ifdef BOOKSHELF
 #define NUM_LEDS 90
 #define NAME "bookshelf"
+const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4B};
 #endif
 
 #ifdef DESK
 #define NUM_LEDS 60
 #define NAME "desk"
+const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
 #endif
 
 #ifndef BOOKSHELF 
@@ -23,7 +26,6 @@
 #endif
 #endif
 
-#define BROKER_ADDR IPAddress(192, 168, 2, 145)
 #define DATA_PIN 5
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
@@ -43,7 +45,7 @@ void updateLeds(CRGB newColor) {
     }
 }
 
-void enable_leds(bool enable) {
+void enableLeds(bool enable) {
     if (enable) {
         updateLeds(ledColor);
     } else {
@@ -52,7 +54,7 @@ void enable_leds(bool enable) {
 }
 
 void onStateCommand(bool state, HALight* sender) {
-    enable_leds(state);
+    enableLeds(state);
     sender->setState(state);
 }
 
@@ -73,13 +75,10 @@ void setup() {
     Serial.begin(115200);
     // for debugging
     /*delay(1500);*/
-    Serial.setDebugOutput(true);
 
     // WiFi.persistent(true);
     Serial.println("Booting");
 
-    byte mac[WL_MAC_ADDR_LENGTH];
-    WiFi.macAddress(mac);
     device.setUniqueId(mac, sizeof(mac));
     device.enableExtendedUniqueIds();
     Serial.println("unique id");
@@ -157,21 +156,18 @@ void setup() {
     light.setCurrentState(true);
 
     // enable light on startup
-    enable_leds(true);
+    enableLeds(true);
 
-    // set device details
-    char buf[strlen("Esp8266 on ") + strlen(NAME) + 1];
-    strcpy(buf, "Esp8266 on ");
-    strcat(buf, NAME);
-    device.setName(buf);
+    device.setName(NAME);
     device.setSoftwareVersion("1.0");
+    device.setManufacturer("Larsianer");
 
     // handle light states
     light.onStateCommand(onStateCommand);
     light.onBrightnessCommand(onBrightnessCommand);
     light.onRGBColorCommand(onRGBColorCommand);
 
-    mqtt.begin(BROKER_ADDR);
+    mqtt.begin("lars-pi");
 
     Serial.println("Setup done");
 }

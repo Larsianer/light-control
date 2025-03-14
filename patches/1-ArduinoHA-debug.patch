@@ -1,0 +1,4 @@
+4c4
+< // #define ARDUINOHA_DEBUG
+---
+> #define ARDUINOHA_DEBUG
