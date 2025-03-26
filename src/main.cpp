@@ -1,9 +1,11 @@
 #define DESK
+#define DESK
 #define ARDUINOHA_DEBUG
 #include <ArduinoHADefines.h>
 #include <ArduinoHA.h>
 #include <ArduinoOTA.h>
 #include <FastLED.h>
+#include <Adafruit_AHTX0.h>
 #include "secrets.h"
 
 // include the right header file and for ide completion define some placeholders
@@ -26,7 +28,7 @@ const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
 #endif
 #endif
 
-#define DATA_PIN 5
+#define DATA_PIN 2
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 
@@ -38,6 +40,13 @@ HADevice device;
 HAMqtt mqtt(client, device);
 
 HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature);
+
+#ifdef DESK
+HASensorNumber tempHA("temp", HABaseDeviceType::PrecisionP1);
+Adafruit_AHTX0 aht;
+unsigned long intervall = 5000;
+unsigned long lastMillis = 0;
+#endif
 
 void updateLeds(CRGB newColor) {
     for (int i = 0; i < NUM_LEDS; ++i) {
@@ -104,6 +113,14 @@ void setup() {
         delay(500);
     }
 
+#ifdef DESK
+    while (!aht.begin()) {
+        Serial.println("Could not find AHT. Check wiring");
+        delay(10);
+    }
+    Serial.println("AHTx0 found!");
+#endif
+
     // Begin: OTA code
     ArduinoOTA.onStart([]() {
         String type;
@@ -167,6 +184,13 @@ void setup() {
     light.onBrightnessCommand(onBrightnessCommand);
     light.onRGBColorCommand(onRGBColorCommand);
 
+    // handle temp sensor setup
+#ifdef DESK
+    tempHA.setDeviceClass("temperature");
+    tempHA.setUnitOfMeasurement("°C");
+    lastMillis = millis();
+#endif
+
     mqtt.begin("lars-pi");
 
     Serial.println("Setup done");
@@ -177,4 +201,15 @@ void loop() {
 
     mqtt.loop();
     FastLED.show();
+#ifdef DESK
+    unsigned long currentMillis = millis();
+
+    // get sensor values
+    sensors_event_t humidity, temp;
+    aht.getEvent(&humidity, &temp);
+    if (currentMillis - lastMillis > intervall) {
+        tempHA.setValue(temp.temperature);
+        lastMillis = currentMillis;
+    }
+#endif
 }
