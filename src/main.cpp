@@ -43,6 +43,7 @@ HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature);
 
 #ifdef DESK
 HASensorNumber tempHA("temp", HABaseDeviceType::PrecisionP1);
+HASensorNumber humidityHA("humidity");
 Adafruit_AHTX0 aht;
 unsigned long intervall = 5000;
 unsigned long lastMillis = 0;
@@ -184,10 +185,12 @@ void setup() {
     light.onBrightnessCommand(onBrightnessCommand);
     light.onRGBColorCommand(onRGBColorCommand);
 
-    // handle temp sensor setup
+    // handle sensor setup
 #ifdef DESK
     tempHA.setDeviceClass("temperature");
     tempHA.setUnitOfMeasurement("°C");
+    humidityHA.setDeviceClass("humidity");
+    humidityHA.setUnitOfMeasurement("%");
     lastMillis = millis();
 #endif
 
@@ -209,6 +212,7 @@ void loop() {
     aht.getEvent(&humidity, &temp);
     if (currentMillis - lastMillis > intervall) {
         tempHA.setValue(temp.temperature);
+        humidityHA.setValue(humidity.relative_humidity);
         lastMillis = currentMillis;
     }
 #endif
