@@ -1,11 +1,11 @@
-#define DESK
-#define DESK
-#define ARDUINOHA_DEBUG
+#define BOOKSHELF
+#include "Adafruit_SGP30.h"
 #include <ArduinoHADefines.h>
 #include <ArduinoHA.h>
 #include <ArduinoOTA.h>
 #include <FastLED.h>
 #include <Adafruit_AHTX0.h>
+#include <TelnetStream.h>
 #include "secrets.h"
 
 // include the right header file and for ide completion define some placeholders
@@ -34,6 +34,7 @@ const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
 
 CRGB leds[NUM_LEDS];
 CRGB ledColor(255, 255, 255);
+bool enable = true;
 
 WiFiClient client;
 HADevice device;
@@ -45,12 +46,30 @@ HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature);
 HASensorNumber tempHA("temp", HABaseDeviceType::PrecisionP1);
 HASensorNumber humidityHA("humidity");
 Adafruit_AHTX0 aht;
+Adafruit_SGP30 sgp;
 unsigned long intervall = 5000;
 unsigned long lastMillis = 0;
 #endif
 
 void updateLeds(CRGB newColor) {
     for (int i = 0; i < NUM_LEDS; ++i) {
+        leds[i] = newColor;
+    }
+}
+
+void animateLeds() {
+    // the amplitue of the wave, in range [0, 255]
+    float amplitude = 127.5;
+    // the period of the wave, in s
+    float period = 3.0;
+    // the phase velocity of the wave, in m
+    float wavelength = 1.5;
+
+    for (int i = 0; i < NUM_LEDS; ++i) {
+        CRGB newColor = ledColor;
+        newColor.r = qsub8(ledColor.r, int(amplitude * sin(2.0 * PI / period * (millis() / 1000.0) - (2.0 * PI / wavelength * i / 30.0)) + amplitude));
+        newColor.g = qsub8(ledColor.g, int(amplitude * sin(2.0 * PI / period * (millis() / 1000.0) - (2.0 * PI / wavelength * i / 30.0)) + amplitude));
+        newColor.b = qsub8(ledColor.b, int(amplitude * sin(2.0 * PI / period * (millis() / 1000.0) - (2.0 * PI / wavelength * i / 30.0)) + amplitude));
         leds[i] = newColor;
     }
 }
@@ -64,7 +83,7 @@ void enableLeds(bool enable) {
 }
 
 void onStateCommand(bool state, HALight* sender) {
-    enableLeds(state);
+    enable = state;
     sender->setState(state);
 }
 
@@ -165,6 +184,8 @@ void setup() {
     Serial.print("Connected, IP address: ");
     Serial.println(WiFi.localIP());
 
+    TelnetStream.begin();
+
     FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
     FastLED.setBrightness(255);
 
@@ -174,7 +195,7 @@ void setup() {
     light.setCurrentState(true);
 
     // enable light on startup
-    enableLeds(true);
+    enableLeds(enable);
 
     device.setName(NAME);
     device.setSoftwareVersion("1.0");
@@ -199,18 +220,30 @@ void setup() {
     Serial.println("Setup done");
 }
 
+// TODO: implement sgp30 logic for measuring and baseline handling
+unsigned long int lastAnim = 0;
+
 void loop() {
     ArduinoOTA.handle();
 
     mqtt.loop();
     FastLED.show();
-#ifdef DESK
+
     unsigned long currentMillis = millis();
 
-    // get sensor values
-    sensors_event_t humidity, temp;
-    aht.getEvent(&humidity, &temp);
+    if (currentMillis - lastAnim > 16) {
+        if (enable) {
+            animateLeds();
+        } else {
+            enableLeds(false);
+        }
+        lastAnim = currentMillis;
+    }
+#ifdef DESK
     if (currentMillis - lastMillis > intervall) {
+        // get sensor values
+        sensors_event_t humidity, temp;
+        aht.getEvent(&humidity, &temp);
         tempHA.setValue(temp.temperature);
         humidityHA.setValue(humidity.relative_humidity);
         lastMillis = currentMillis;
