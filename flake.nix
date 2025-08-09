@@ -16,6 +16,7 @@
             packages = with pkgs; [
                 platformio-core
                 gnumake
+                inetutils
             ];
 
             shellHook = ''
