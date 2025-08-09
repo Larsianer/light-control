@@ -1,5 +1,4 @@
-#define DESK
-#define DESK
+#define BOOKSHELF
 #define ARDUINOHA_DEBUG
 #include <ArduinoHADefines.h>
 #include <ArduinoHA.h>
@@ -11,12 +10,16 @@
 // include the right header file and for ide completion define some placeholders
 #ifdef BOOKSHELF
 #define NUM_LEDS 90
+#define DATA_PIN 4
+// the built in LED uses pin 2,
+#define LED_PIN 2
 #define NAME "bookshelf"
 const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4B};
 #endif
 
 #ifdef DESK
 #define NUM_LEDS 60
+#define DATA_PIN 2
 #define NAME "desk"
 const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
 #endif
@@ -24,11 +27,11 @@ const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
 #ifndef BOOKSHELF 
 #ifndef DESK
 #define NUM_LEDS 0
+#define DATA_PIN 2
 #define NAME "test"
 #endif
 #endif
 
-#define DATA_PIN 2
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 
@@ -96,13 +99,13 @@ void setup() {
     device.enableSharedAvailability();
     device.enableLastWill();
 
-    // WiFi.disconnect();
+    WiFi.disconnect();
     WiFi.mode(WIFI_STA);
-    /*delay(150);*/
-    // WiFi.setPhyMode(WIFI_PHY_MODE_11G);
-    // delay(150);
+    delay(150);
+    WiFi.setPhyMode(WIFI_PHY_MODE_11G);
+    delay(150);
     WiFi.begin(SSID, PWD);
-    /*delay(1500);*/
+    delay(1500);
 
     while (WiFi.status() != WL_CONNECTED) {
         /* Serial.print("Connection Failed! Rebooting...");
@@ -119,6 +122,11 @@ void setup() {
         delay(10);
     }
     Serial.println("AHTx0 found!");
+#endif
+#ifdef BOOKSHELF
+    pinMode(LED_PIN, OUTPUT);
+    // disable the built in LED (active low)
+    digitalWrite(LED_PIN, HIGH);
 #endif
 
     // Begin: OTA code
