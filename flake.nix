@@ -20,7 +20,7 @@
             ];
 
             shellHook = ''
-                exec zsh
+                exec fish
                 '';
         };
     };
