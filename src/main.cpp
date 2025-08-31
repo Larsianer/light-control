@@ -1,5 +1,5 @@
 #define BOOKSHELF
-#define ARDUINOHA_DEBUG
+#define BOOKSHELF
 #include "Adafruit_SGP30.h"
 #include <ArduinoHADefines.h>
 #include <ArduinoHA.h>
@@ -31,6 +31,7 @@ const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
 #define NUM_LEDS 0
 #define DATA_PIN 2
 #define NAME "test"
+const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4C};
 #endif
 #endif
 
@@ -46,6 +47,7 @@ HADevice device;
 HAMqtt mqtt(client, device);
 
 HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature);
+HAButton button("restartButton");
 
 #ifdef DESK
 HASensorNumber tempHA("temp", HABaseDeviceType::PrecisionP1);
@@ -85,6 +87,10 @@ void enableLeds(bool enable) {
     } else {
         updateLeds(CRGB::Black);
     }
+}
+
+void onCommand(HAButton* sender) {
+    ESP.restart();
 }
 
 void onStateCommand(bool state, HALight* sender) {
@@ -215,6 +221,10 @@ void setup() {
     light.onStateCommand(onStateCommand);
     light.onBrightnessCommand(onBrightnessCommand);
     light.onRGBColorCommand(onRGBColorCommand);
+
+    // handle restart button
+    button.setDeviceClass("restart");
+    button.onCommand(onCommand);
 
     // handle sensor setup
 #ifdef DESK
