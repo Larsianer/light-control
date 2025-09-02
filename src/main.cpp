@@ -1,5 +1,4 @@
-#define BOOKSHELF
-#define BOOKSHELF
+#define DESK
 #include "Adafruit_SGP30.h"
 #include <ArduinoHADefines.h>
 #include <ArduinoHA.h>
@@ -41,13 +40,15 @@ const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4C};
 CRGB leds[NUM_LEDS];
 CRGB ledColor(255, 255, 255);
 bool enable = true;
+bool animate = false;
 
 WiFiClient client;
 HADevice device;
 HAMqtt mqtt(client, device);
 
 HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature);
-HAButton button("restartButton");
+HAButton restartButton("restartButton");
+HAButton animateButton("animateButton");
 
 #ifdef DESK
 HASensorNumber tempHA("temp", HABaseDeviceType::PrecisionP1);
@@ -90,7 +91,11 @@ void enableLeds(bool enable) {
 }
 
 void onCommand(HAButton* sender) {
-    ESP.restart();
+    if (sender->getName() == restartButton.getName()) {
+        ESP.restart();
+    } else if (sender->getName() == animateButton.getName()) {
+        animate = !animate;
+    }
 }
 
 void onStateCommand(bool state, HALight* sender) {
@@ -214,7 +219,7 @@ void setup() {
     enableLeds(enable);
 
     device.setName(NAME);
-    device.setSoftwareVersion("1.0");
+    device.setSoftwareVersion("1.1");
     device.setManufacturer("Larsianer");
 
     // handle light states
@@ -223,8 +228,17 @@ void setup() {
     light.onRGBColorCommand(onRGBColorCommand);
 
     // handle restart button
-    button.setDeviceClass("restart");
-    button.onCommand(onCommand);
+    restartButton.setDeviceClass("restart");
+    String restartButtonName("Restart ");
+    restartButtonName.concat(NAME);
+    restartButton.setName("Restart Button");
+    restartButton.onCommand(onCommand);
+
+    // handle animate button
+    String animateButtonName("Animate ");
+    animateButtonName.concat(NAME);
+    animateButton.setName("Animate Button");
+    animateButton.onCommand(onCommand);
 
     // handle sensor setup
 #ifdef DESK
@@ -252,8 +266,10 @@ void loop() {
     unsigned long currentMillis = millis();
 
     if (currentMillis - lastAnim > 16) {
-        if (enable) {
+        if (enable && animate) {
             animateLeds();
+        } else if (enable) {
+            enableLeds(true);
         } else {
             enableLeds(false);
         }
