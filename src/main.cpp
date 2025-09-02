@@ -1,4 +1,4 @@
-#define DESK
+#define BOOKSHELF
 #include "Adafruit_SGP30.h"
 #include <ArduinoHADefines.h>
 #include <ArduinoHA.h>
@@ -48,7 +48,7 @@ HAMqtt mqtt(client, device);
 
 HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature);
 HAButton restartButton("restartButton");
-HAButton animateButton("animateButton");
+HASwitch animateSwitch("animateSwitch");
 
 #ifdef DESK
 HASensorNumber tempHA("temp", HABaseDeviceType::PrecisionP1);
@@ -90,11 +90,16 @@ void enableLeds(bool enable) {
     }
 }
 
-void onCommand(HAButton* sender) {
+void onButtonCommand(HAButton* sender) {
     if (sender->getName() == restartButton.getName()) {
         ESP.restart();
-    } else if (sender->getName() == animateButton.getName()) {
-        animate = !animate;
+    }
+}
+
+void onSwitchCommand(bool state, HASwitch* sender) {
+    if (sender->getName() == animateSwitch.getName()) {
+        animate = state;
+        sender->setState(state);
     }
 }
 
@@ -219,7 +224,7 @@ void setup() {
     enableLeds(enable);
 
     device.setName(NAME);
-    device.setSoftwareVersion("1.1");
+    device.setSoftwareVersion("1.2");
     device.setManufacturer("Larsianer");
 
     // handle light states
@@ -229,16 +234,14 @@ void setup() {
 
     // handle restart button
     restartButton.setDeviceClass("restart");
-    String restartButtonName("Restart ");
-    restartButtonName.concat(NAME);
     restartButton.setName("Restart Button");
-    restartButton.onCommand(onCommand);
+    restartButton.onCommand(onButtonCommand);
 
     // handle animate button
-    String animateButtonName("Animate ");
-    animateButtonName.concat(NAME);
-    animateButton.setName("Animate Button");
-    animateButton.onCommand(onCommand);
+    animateSwitch.setName("Animate LEDs");
+    animateSwitch.onCommand(onSwitchCommand);
+    // set the state before connecting to mqtt, thus it gets reported correctly
+    animateSwitch.setCurrentState(animate);
 
     // handle sensor setup
 #ifdef DESK
