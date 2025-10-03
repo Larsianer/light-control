@@ -1,4 +1,6 @@
 #define BOOKSHELF
+#include "device-types/HALight.h"
+#include <cstdint>
 #include "Adafruit_SGP30.h"
 #include <ArduinoHADefines.h>
 #include <ArduinoHA.h>
@@ -15,14 +17,14 @@
 // the built in LED uses pin 2,
 #define LED_PIN 2
 #define NAME "bookshelf"
-const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4B};
+byte const mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4B};
 #endif
 
 #ifdef DESK
 #define NUM_LEDS 60
 #define DATA_PIN 2
 #define NAME "desk"
-const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
+byte const mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
 #endif
 
 #ifndef BOOKSHELF 
@@ -30,7 +32,7 @@ const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A};
 #define NUM_LEDS 0
 #define DATA_PIN 2
 #define NAME "test"
-const byte mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4C};
+byte const mac[] = {0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4C};
 #endif
 #endif
 
@@ -42,13 +44,18 @@ CRGB ledColor(255, 255, 255);
 bool enable = true;
 bool animate = false;
 
+char const * const lightEffects[] = { 
+    "Still",
+    "Basic",
+    "Pride",
+};
+
 WiFiClient client;
 HADevice device;
 HAMqtt mqtt(client, device);
 
-HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature);
+HALight light(NAME, HALight::BrightnessFeature | HALight::RGBFeature | HALight::EffectsFeature);
 HAButton restartButton("restartButton");
-HASwitch animateSwitch("animateSwitch");
 
 #ifdef DESK
 HASensorNumber tempHA("temp", HABaseDeviceType::PrecisionP1);
@@ -96,13 +103,6 @@ void onButtonCommand(HAButton* sender) {
     }
 }
 
-void onSwitchCommand(bool state, HASwitch* sender) {
-    if (sender->getName() == animateSwitch.getName()) {
-        animate = state;
-        sender->setState(state);
-    }
-}
-
 void onStateCommand(bool state, HALight* sender) {
     enable = state;
     sender->setState(state);
@@ -119,6 +119,21 @@ void onRGBColorCommand(HALight::RGBColor color, HALight* sender) {
     ledColor.blue = color.blue; 
     updateLeds(ledColor);
     sender->setRGBColor(color);
+}
+
+void onEffectCommand(uint8_t index, HALight* sender) {
+    switch (index) {
+        case 0:
+            animate = false;
+            break;
+        case 1:
+            animate = true;
+            break;
+        default:
+            animate = false;
+            break;
+    }
+    sender->setEffect(index);
 }
 
 void setup() {
@@ -215,33 +230,32 @@ void setup() {
     FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
     FastLED.setBrightness(255);
 
-    // set the light before connecting to the mqtt client, so that it is reported correctly
-    light.setCurrentRGBColor(HALight::RGBColor(ledColor.red, ledColor.green, ledColor.blue));
-    light.setCurrentBrightness(255);
-    light.setCurrentState(true);
+    device.setName(NAME);
+    device.setSoftwareVersion("1.3");
+    device.setManufacturer("Larsianer");
 
     // enable light on startup
     enableLeds(enable);
 
-    device.setName(NAME);
-    device.setSoftwareVersion("1.2");
-    device.setManufacturer("Larsianer");
+    // set the light before connecting to the mqtt client, so that it is reported correctly
+    light.setCurrentRGBColor(HALight::RGBColor(ledColor.red, ledColor.green, ledColor.blue));
+    light.setCurrentBrightness(255);
+    light.setCurrentState(enable);
+    // TODO: calculate the size of array at compile time
+    // this should be possible bc it is a const array of char const *
+    light.setEffects(lightEffects, 3);
+    light.setCurrentEffect(0);
 
     // handle light states
     light.onStateCommand(onStateCommand);
     light.onBrightnessCommand(onBrightnessCommand);
     light.onRGBColorCommand(onRGBColorCommand);
+    light.onEffectCommand(onEffectCommand);
 
     // handle restart button
     restartButton.setDeviceClass("restart");
     restartButton.setName("Restart Button");
     restartButton.onCommand(onButtonCommand);
-
-    // handle animate button
-    animateSwitch.setName("Animate LEDs");
-    animateSwitch.onCommand(onSwitchCommand);
-    // set the state before connecting to mqtt, thus it gets reported correctly
-    animateSwitch.setCurrentState(animate);
 
     // handle sensor setup
 #ifdef DESK
