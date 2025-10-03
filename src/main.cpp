@@ -1,4 +1,4 @@
-#define BOOKSHELF
+#define DESK
 #include "device-types/HALight.h"
 #include <cstdint>
 #include "Adafruit_SGP30.h"
@@ -266,7 +266,7 @@ void setup() {
     lastMillis = millis();
 #endif
 
-    mqtt.begin("lars-pi");
+    mqtt.begin("lars-server");
 
     Serial.println("Setup done");
 }
