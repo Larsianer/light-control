@@ -9,6 +9,8 @@
 #include <Adafruit_AHTX0.h>
 #include <TelnetStream.h>
 #include "secrets.h"
+#include <ESP_EEPROM.h>
+#include "utils.h"
 
 // include the right header file and for ide completion define some placeholders
 #ifdef BOOKSHELF
@@ -62,6 +64,7 @@ HASensorNumber tempHA("temp", HABaseDeviceType::PrecisionP1);
 HASensorNumber humidityHA("humidity");
 Adafruit_AHTX0 aht;
 Adafruit_SGP30 sgp;
+bool sgpInitialized = false;
 unsigned long intervall = 5000;
 unsigned long lastMillis = 0;
 #endif
@@ -169,12 +172,31 @@ void setup() {
         delay(500);
     }
 
+    TelnetStream.begin();
+
 #ifdef DESK
     while (!aht.begin()) {
         Serial.println("Could not find AHT. Check wiring");
         delay(10);
     }
-    Serial.println("AHTx0 found!");
+    Serial.println("AHT found!");
+
+    for (int counter = 0; counter < 10; counter++) {
+        // check connection to sensor for 10s and then continue
+        if (sgp.begin()) {
+            Serial.println("SGP found!");
+            sgpInitialized = true;
+            break;
+        }
+        Serial.println("Could not find SGP. Check wiring");
+        delay(1000);
+    }
+
+    // Initialize the lib and set minimum data size (in bits)
+    EEPROM.begin(16);
+    if (sgpInitialized) {
+    
+    }
 #endif
 #ifdef BOOKSHELF
     pinMode(LED_PIN, OUTPUT);
@@ -224,8 +246,6 @@ void setup() {
     Serial.println("Ready");
     Serial.print("Connected, IP address: ");
     Serial.println(WiFi.localIP());
-
-    TelnetStream.begin();
 
     FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
     FastLED.setBrightness(255);
@@ -295,9 +315,26 @@ void loop() {
 #ifdef DESK
     if (currentMillis - lastMillis > intervall) {
         // get sensor values
-        sensors_event_t humidity, temp;
-        aht.getEvent(&humidity, &temp);
-        tempHA.setValue(temp.temperature);
+        sensors_event_t humidity, temperature;
+        aht.getEvent(&humidity, &temperature);
+        if (sgpInitialized) {
+            uint16_t TVOCBase, eCO2Base;
+            if(!sgp.getIAQBaseline(&eCO2Base, &TVOCBase)) {
+                TelnetStream.println("Could not get Baseline");
+            }
+
+            TelnetStream.print("TVOCBase: ");
+            TelnetStream.print(TVOCBase, HEX);
+            TelnetStream.print(" eCO2Base: ");
+            TelnetStream.println(eCO2Base, HEX);
+
+            // at address 0 put TVOCBase and at address 2 eCO2Base
+            EEPROM.put(0, TVOCBase);
+            EEPROM.put(2, eCO2Base);
+
+            // sgp.setHumidity(getAbsoluteHumidity(temperature.temperature, humidity.relative_humidity));
+        }
+        tempHA.setValue(temperature.temperature);
         humidityHA.setValue(humidity.relative_humidity);
         lastMillis = currentMillis;
     }
